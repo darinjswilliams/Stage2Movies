@@ -227,21 +227,12 @@ public class DetailActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<TrailerList> call, Response<TrailerList> response) {
                 if(response.isSuccessful()){
-                    TrailerList posts =  response.body();
-                    mTrailerList = new ArrayList<Trailer>();
-                    mTrailerList.addAll(posts.getResults());
+                    TrailerList postTrailers =  response.body();
 
-
-                    for (Trailer post : posts.getResults()){
-                        Log.d(TAG, "onResponse: getTrailerDataFeed" + post.getName());
-                        Log.d(TAG, "onResponse: getTrailerDataFeed" + post.getId());
-                        Log.d(TAG, "onResponse: getTrailerDataFeed" + post.getType());
-                        mTrailerList.add(post);
-                       }
-
-                    if (mTrailerList != null) {
+                    if (postTrailers != null) {
                         Log.d(TAG, "a trailer list has been received");
-                        updateTrailers(posts);
+
+                        updateTrailers(postTrailers);
                     }
 
                 }
