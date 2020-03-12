@@ -37,6 +37,10 @@ public class MyPopularMovieAdapter extends RecyclerView.Adapter<MyPopularMovieAd
         this.mMoviesData = new ArrayList<>();
     }
 
+    public MyPopularMovieAdapter(){
+        this.mMoviesData = new ArrayList<>();
+    }
+
     public interface MyPopularMovieAdapterOnClickHandler {
         void onClick(Movie myMovie);
     }

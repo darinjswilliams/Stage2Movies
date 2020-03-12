@@ -222,7 +222,7 @@ public class DetailActivity extends AppCompatActivity {
     private void getTrailerDataFeed(String movieId){
         Log.d(TAG, "getVideoDataFeed: ");
 //        Call<TrailerList> call = moviePlaceHolderApi.getMovieTrailers(movieId, consumerSecret);
-        Call<com.dwilliams.moviesphasetwo.dto.TrailerList> call = moviePlaceHolderApi.getMovieTrailers(movieId, consumerSecret);
+        Call<TrailerList> call = moviePlaceHolderApi.getMovieTrailers(movieId, consumerSecret);
         call.enqueue(new Callback<TrailerList>() {
             @Override
             public void onResponse(Call<TrailerList> call, Response<TrailerList> response) {

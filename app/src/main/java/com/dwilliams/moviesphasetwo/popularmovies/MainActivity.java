@@ -1,17 +1,5 @@
 package com.dwilliams.moviesphasetwo.popularmovies;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -26,25 +14,32 @@ import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-
 import com.dwilliams.moviesphasetwo.constants.Constants;
+import com.dwilliams.moviesphasetwo.customarrayadapter.MyPopularMovieAdapter;
 import com.dwilliams.moviesphasetwo.dao.Movie;
 import com.dwilliams.moviesphasetwo.dto.MovieList;
-import com.dwilliams.moviesphasetwo.customarrayadapter.MyPopularMovieAdapter;
 import com.dwilliams.moviesphasetwo.networkUtils.MoviePlaceHolderApi;
 import com.dwilliams.moviesphasetwo.networkUtils.RetrofitClient;
 import com.dwilliams.moviesphasetwo.persistence.AppDatabase;
-import com.dwilliams.moviesphasetwo.persistence.AppExecutors;
 import com.dwilliams.moviesphasetwo.persistence.MainViewModel;
-import com.facebook.stetho.DumperPluginsProvider;
-import com.facebook.stetho.Stetho;
-import com.facebook.stetho.dumpapp.DumperPlugin;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.gson.reflect.TypeToken.get;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+
 
 public class MainActivity extends AppCompatActivity implements MyPopularMovieAdapter.MyPopularMovieAdapterOnClickHandler{
 
@@ -84,7 +79,8 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
         setSupportActionBar(toolbar);
 
 
-
+        //Initialize View Model
+        initViewModel();
 
         myRecyclerView = (RecyclerView) findViewById(R.id.myRecycler);
         mRelativeLayout = (RelativeLayout) findViewById(R.id.relativeLayoutId);
@@ -103,32 +99,62 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
 
 
         //runData on backround thread fist to get default data
-        loadMovieData(Constants.POPULARITY_PARAM);
-
+        //first run call default movie, passing 0
+        if(mViewModel.getMenuId() ==  null) {
+            loadMovieData(Constants.MOVIE_COUNT);
+        } else {
+            loadMovieData(mViewModel.getMenuId());
+        }
         //Get Instance of Database
         mDb = AppDatabase.getsInstance(getApplicationContext());
 
-        //Initialize View Model
-        initViewModel();
 
+
+        subscribe();
     }
 
     private void initViewModel() {
-        mViewModel = ViewModelProviders.of(this)
-                .get(MainViewModel.class);
-        retrieveFavorites();
+        Log.d(TAG, "initViewModel: called");
+        mViewModel = new ViewModelProvider(this).get(MainViewModel.class);
+
     }
+
+    private void subscribe() {
+        Log.d(TAG, "subscribe: called");
+        final Observer<List<Movie>> mMovie = new Observer<List<Movie>>() {
+            @Override
+            public void onChanged(List<Movie> movies) {
+                Log.d(TAG, "onChanged: subscribing");
+                mPopularmoviesAdapter.setmPopularMoviesData(movies);
+            }
+        };
+    }
+
+
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
+        Log.d(TAG, "onSaveInstanceState: called");
+//        if(!mMovieList.isEmpty()){
+//            outState.putParcelableArrayList(ON_SAVE_INSTANCE_STATE, (ArrayList<? extends Parcelable>) mMovieList);
+//        }
+
+        outState.putParcelableArrayList(ON_SAVE_INSTANCE_STATE, (ArrayList<? extends Parcelable>) mMovieList);
         super.onSaveInstanceState(outState);
 
-        if(!mMovieList.isEmpty()){
-            outState.putParcelableArrayList(MOVIE_KEY, (ArrayList<? extends Parcelable>) mMovieList);
-        }
-
-        outState.putParcelableArrayList(ON_SAVE_INSTANCE_STATE, (ArrayList<? extends Parcelable>) mViewModel.getMovie().getValue());
     }
+
+
+
+    // Restore list state from bundle
+    @Override
+    protected void onRestoreInstanceState(Bundle state) {
+        Log.d(TAG, "onRestoreInstanceState: called");
+        super.onRestoreInstanceState(state);
+        if(state != null)
+        mMovieList = state.getParcelable(ON_SAVE_INSTANCE_STATE);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -142,27 +168,32 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         int id = item.getItemId();
+
+        //Keep track of menu item choosen
+
+        mViewModel.setMenuId(id);
         Context context = MainActivity.this;
 
         switch(item.getItemId()){
 
             case R.id.action_sortPopular:
-                loadMovieData(Constants.POPULARITY_PARAM);
+                loadMovieData(item.getItemId());
                 return true;
 
             case R.id.action_sortRating:
-                loadMovieData(Constants.RATNGS_PARAM);
+                loadMovieData(item.getItemId());
                 return true;
 
             case R.id.action_favorites:
                 retrieveFavorites();
+                return true;
 
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void loadMovieData(String sortParam){
+    private void loadMovieData(int sortParam){
         myRecyclerView.setVisibility(View.VISIBLE);
 
         if(checkInternetConnection(this)) {
@@ -211,33 +242,23 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
         intent.putExtra(Constants.POPULAR_MOVIE, myMovie);
         startActivity(intent);
     }
-//Todo - live data retrieve
-    private void setUpViewModel(){
-//        MainViewModel viewModel = ViewModelProviders.of(activity: this).get(MainViewModel.class);
-//          viewModel.getTasks.observe(owner: this, (taskEntries) -> {
-//              Log.d(TAG, msg: "Receiving database upate from LiveData");
-//              mAdapter.setTask(taskEntries);
-        }
-
 
     public void retrieveFavorites() {
         
         //LiveData Runs outside of main thread
         //Use Executors for insert, update, and delete operations
 
-//        final LiveData<List<Movie>> fetchedMovies = mDb.taskDao().getAll();
         mViewModel.getMovie().observe(this, new Observer<List<Movie>>() {
             @Override
-            public void onChanged(List<Movie> movies) {
+            public void onChanged(@Nullable List<Movie> movies) {
                 Log.d(TAG, "onChanged: Receiving database update from LiveData in ViewModel");
                 mPopularmoviesAdapter.setmPopularMoviesData(movies);
             }
         });
-
     }
 
 
-    public void fetchPopularMovie(String sortParam){
+    public void fetchPopularMovie(int sortParam){
 
         Log.d(TAG, "doInBackground: before retrofit build call");
         //Retrofit to parse data
@@ -251,15 +272,15 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
     }
 
 
-    private void getPosts(String sortParam){
+    private void getPosts(int sortParam){
 
         switch(sortParam){
-            case Constants.POPULARITY_PARAM:
+            case R.id.action_sortPopular:
                 Log.d(TAG, "getPosts: calling getPopularMovies");
                 call = moviePlaceHolderApi.getPopularMovies(consumerSecret);
                 break;
 
-            case Constants.RATNGS_PARAM:
+            case  R.id.action_sortRating:
                 Log.d(TAG, "getPosts: calling getTopRatedMovie");
                 call = moviePlaceHolderApi.getTopRatedMovies(consumerSecret);
                 break;
@@ -295,23 +316,4 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
 
     }
 
-
-
-    private class SampleDumperPluginsProvier implements DumperPluginsProvider {
-        private final Context mContext;
-
-        public SampleDumperPluginsProvier(Context context) {
-            mContext = context;
-        }
-
-        @Override
-        public Iterable<DumperPlugin> get() {
-            ArrayList<DumperPlugin> plugins = new ArrayList<>();
-            for(DumperPlugin defaultPlugin: Stetho.defaultDumperPluginsProvider(mContext).get()){
-                plugins.add(defaultPlugin);
-            }
-//            plugins.add(new MyPopularMoviePlugin());
-            return plugins;
-        }
-    }
 }

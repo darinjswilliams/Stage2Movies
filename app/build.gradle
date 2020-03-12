@@ -39,9 +39,11 @@ repositories {
 dependencies {
     def room_version = "2.2.4"
     def lifecycle_version = "2.2.0"
+    def savedStateVersion = "1.0.0-rc02"
     def retrofit_version = "2.7.2"
     def gson_version = "2.7.2"
     def stetho_version = "1.5.1"
+    def lifecycle_extension = "2.2.0-rc02"
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.1.0'
@@ -65,8 +67,8 @@ dependencies {
     //Live Data
     implementation "androidx.lifecycle:lifecycle-livedata:$lifecycle_version"
     annotationProcessor "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version"
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0-alpha03'
+    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$savedStateVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_extension"
 
     //Retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"

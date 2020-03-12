@@ -29,6 +29,7 @@ public final class Constants {
     public static final String YOUTUBE_URL = "https://www.youtube.com/watch?v=";
     public static final String MOVIE_FAVORITES = "favorites";
     public static final int MOVIE_COUNT = 0;
+    public static final String VND_YOUTUBE = "vnd.youtube://";
 
 
 

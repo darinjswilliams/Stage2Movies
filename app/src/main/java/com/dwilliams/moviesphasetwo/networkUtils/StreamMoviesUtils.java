@@ -13,7 +13,7 @@ public class StreamMoviesUtils {
          // Create Action View Intent: Launches Youtube App
         public static void launchTrailerVideoInYoutubeApp(@NonNull Context context, String videoID) {
 
-            Intent launchTrailerVideoInYoutube = new Intent(Intent.ACTION_VIEW, Uri.parse(("vnd.youtube://" + videoID)));
+            Intent launchTrailerVideoInYoutube = new Intent(Intent.ACTION_VIEW, Uri.parse((Constants.VND_YOUTUBE + videoID)));
             context.startActivity(launchTrailerVideoInYoutube);
         }
 
