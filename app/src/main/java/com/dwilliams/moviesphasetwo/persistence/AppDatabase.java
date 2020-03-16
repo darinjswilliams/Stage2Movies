@@ -6,7 +6,6 @@ import android.util.Log;
 import com.dwilliams.moviesphasetwo.dao.Movie;
 import com.dwilliams.moviesphasetwo.dao.MovieDao;
 
-
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;

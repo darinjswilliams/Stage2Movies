@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import com.dwilliams.moviesphasetwo.dto.Trailer;
 import com.dwilliams.moviesphasetwo.networkUtils.StreamMoviesUtils;
-
 import com.dwilliams.moviesphasetwo.popularmovies.R;
 import com.squareup.picasso.Picasso;
 
@@ -34,6 +33,10 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.MyTraile
     public TrailerAdapter(Context ctx, List<Trailer> trailers) {
         this.ctx = ctx;
         this.mTrailerData = trailers;
+    }
+
+    public TrailerAdapter(List<Trailer> mTrailerList) {
+        this.mTrailerData = mTrailerList;
     }
 
     @NonNull

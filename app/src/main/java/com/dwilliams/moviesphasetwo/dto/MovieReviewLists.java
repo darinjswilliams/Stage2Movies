@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class ReviewList implements Parcelable {
+public class MovieReviewLists implements Parcelable {
 
     @SerializedName("id")
     @Expose
@@ -27,21 +27,21 @@ public class ReviewList implements Parcelable {
     }
 
 
-    private ReviewList(Parcel in) {
+    private MovieReviewLists(Parcel in) {
         this.id = ((Integer) in.readValue((Integer.class.getClassLoader())));
         this.page = ((Integer) in.readValue((Integer.class.getClassLoader())));
         this.results = in.createTypedArrayList(Review.CREATOR);
     }
 
-    public static final Creator<ReviewList> CREATOR = new Creator<ReviewList>() {
+    public static final Creator<MovieReviewLists> CREATOR = new Creator<MovieReviewLists>() {
         @Override
-        public ReviewList createFromParcel(Parcel in) {
-            return new ReviewList(in);
+        public MovieReviewLists createFromParcel(Parcel in) {
+            return new MovieReviewLists(in);
         }
 
         @Override
-        public ReviewList[] newArray(int size) {
-            return new ReviewList[size];
+        public MovieReviewLists[] newArray(int size) {
+            return new MovieReviewLists[size];
         }
     };
 

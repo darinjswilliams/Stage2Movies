@@ -4,26 +4,25 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
-
-
 
 import com.dwilliams.moviesphasetwo.constants.Constants;
 import com.dwilliams.moviesphasetwo.customarrayadapter.ReviewAdapter;
 import com.dwilliams.moviesphasetwo.customarrayadapter.TrailerAdapter;
 import com.dwilliams.moviesphasetwo.dao.Movie;
+import com.dwilliams.moviesphasetwo.dto.MovieReviewLists;
 import com.dwilliams.moviesphasetwo.dto.Review;
-import com.dwilliams.moviesphasetwo.dto.ReviewList;
 import com.dwilliams.moviesphasetwo.dto.Trailer;
 import com.dwilliams.moviesphasetwo.dto.TrailerList;
 import com.dwilliams.moviesphasetwo.networkUtils.MoviePlaceHolderApi;
 import com.dwilliams.moviesphasetwo.networkUtils.RetrofitClient;
 import com.dwilliams.moviesphasetwo.persistence.AppDatabase;
-import com.dwilliams.moviesphasetwo.persistence.AppExecutors;
-
-
+import com.dwilliams.moviesphasetwo.persistence.AppRepository;
+import com.dwilliams.moviesphasetwo.persistence.DetailViewModel;
+import com.dwilliams.moviesphasetwo.persistence.DetailViewModelFactory;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -31,6 +30,7 @@ import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
@@ -70,9 +70,12 @@ public class DetailActivity extends AppCompatActivity {
     private List<Review> mReviewList;
     private TrailerAdapter mTrailersAdapter;
     private ReviewAdapter mReviewsAdapter;
+    private DetailViewModel mViewModel;
 
     // Movie Database Instance
     private AppDatabase mDb;
+    private AppRepository appRepository;
+
 
 
     @Override
@@ -85,7 +88,15 @@ public class DetailActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
 
         //Initialize Database
-        mDb = AppDatabase.getsInstance(getApplicationContext());
+        appRepository = AppRepository.getInstance(this.getApplication());
+
+
+        Intent intent = getIntent();
+        popularMovie = intent.getParcelableExtra(Constants.POPULAR_MOVIE);
+
+        //Initialize ViewModel
+        DetailViewModelFactory dViewModelFactory = new DetailViewModelFactory(appRepository, popularMovie.getId() );
+        mViewModel = new ViewModelProvider(this, dViewModelFactory).get(DetailViewModel.class);
 
         //Setup tool bar
         setSupportActionBar(toolbar);
@@ -100,11 +111,8 @@ public class DetailActivity extends AppCompatActivity {
         });
 
 
-        Intent intent = getIntent();
-        popularMovie = intent.getParcelableExtra(Constants.POPULAR_MOVIE);
-
         // Get Trailer and Reviews
-        getMovieTrailersAndReviews(popularMovie.getId().toString());
+        getMovieTrailersAndReviews(popularMovie.getId());
 
         //Get data from Parcelable Object
         String movieTitle = popularMovie.getTitle();
@@ -163,48 +171,48 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     private void initFavoriteMovieUI(){
-        favoriteBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onSaveButtonClicked();
+//        Boolean isMovieFavorite = false;
+
+        // Observe Checkbox
+        mViewModel.getmMovieFavoriteIds().observe(this, mFavoriteIds -> {
+            Boolean isMovieFavorite = false;
+
+            if(mFavoriteIds != null && mFavoriteIds.contains(popularMovie.getId())){
+                Log.d(TAG, "initFavoriteMovieUI: move is set as favorite");
+                isMovieFavorite = true;
             }
-        });
-    }
 
-    private void onSaveButtonClicked(){
-        Log.d(TAG, "onSaveButtonClicked: --> lets save data");
+            favoriteBtn.setChecked(isMovieFavorite);
+            Log.d(TAG, "initFavoriteMovieUI: button value" + isMovieFavorite.toString());
 
-        AppExecutors.getInstance().mDbExecutor().execute(new Runnable() {
-            @Override
-            public void run() {
+            favoriteBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if(isChecked){
+                        Log.d(TAG, "onClick: adding favorite");
+                        mViewModel.addFavoriteMovie(popularMovie);
+                    }else{
+                        Log.d(TAG, "onClick: removing favorite");
+                        mViewModel.deleteFavoriteMovie(popularMovie);
+                    }
 
-
-                if (favoriteBtn.isChecked()) {
-                    Log.d(TAG, "run: movie exist updating");
-                      int cnt = mDb.taskDao().doesExists(popularMovie.getId());
-                      if(cnt > Constants.MOVIE_COUNT){
-                          mDb.taskDao().updateTask(popularMovie);
-                      }else {
-                          mDb.taskDao().insertTask(popularMovie);
-                      }
-                } else {
-                    mDb.taskDao().deleteTask(popularMovie);
-                    Log.d(TAG, "run: remove from favorites");
                 }
-            }
+            });
         });
     }
 
 
     private void updateTrailers(TrailerList trailerList){
+        Log.d(TAG, "updateTrailers: count of trailers ");
         mTrailersAdapter.updateTrailers(trailerList.getResults());
     }
 
-    private void updateReviews(ReviewList reviewList){
+
+    private void updateReviews(MovieReviewLists reviewList){
         mReviewsAdapter.updateReviews(reviewList.getResults());
     }
 
-    private void getMovieTrailersAndReviews(String movieId){
+    private void getMovieTrailersAndReviews(Integer movieId){
 
         Log.d(TAG, "doInBackground: getMovieTrailersAndReviews --> id " + movieId);
         //Retrofit to parse data
@@ -219,8 +227,24 @@ public class DetailActivity extends AppCompatActivity {
 
     }
 
-    private void getTrailerDataFeed(String movieId){
-        Log.d(TAG, "getVideoDataFeed: ");
+    private void getTrailerDataFeed(Integer movieId){
+
+
+        Log.d(TAG, "getVideoDataFeed: " + movieId);
+//        updateTrailers(mViewModel.getmMovieTrailers());
+
+//       mViewModel.getmMovieTrailers().observe(this, mTrailerList -> {
+//           mTrailersAdapter = new TrailerAdapter(mTrailerList);
+//           recVwtrailers.setAdapter(mTrailersAdapter);
+////           mTrailersAdapter.updateTrailers(mTrailerList);
+//
+//           if(mTrailersAdapter.getItemCount()== 0){
+//               recVwtrailers.setVisibility(View.INVISIBLE);
+//           } else {
+//               recVwtrailers.setVisibility(View.VISIBLE);
+//           }
+//       });
+
 //        Call<TrailerList> call = moviePlaceHolderApi.getMovieTrailers(movieId, consumerSecret);
         Call<TrailerList> call = moviePlaceHolderApi.getMovieTrailers(movieId, consumerSecret);
         call.enqueue(new Callback<TrailerList>() {
@@ -248,15 +272,15 @@ public class DetailActivity extends AppCompatActivity {
 
     }
 
-    private void getReviewDataFeed(String movieId){
+    private void getReviewDataFeed(Integer movieId){
         Log.d(TAG, "getReviewDataFeed: ");
-        Call<ReviewList> call = moviePlaceHolderApi.getMovieReviews(movieId, consumerSecret);
+        Call<MovieReviewLists> call = moviePlaceHolderApi.getMovieReviews(movieId, consumerSecret);
 
-        call.enqueue(new Callback<ReviewList>() {
+        call.enqueue(new Callback<MovieReviewLists>() {
             @Override
-            public void onResponse(Call<ReviewList> call, Response<ReviewList> response) {
+            public void onResponse(Call<MovieReviewLists> call, Response<MovieReviewLists> response) {
                 if(response.isSuccessful()){
-                    ReviewList posts =  response.body();
+                    MovieReviewLists posts =  response.body();
                     mReviewList = new ArrayList<Review>();
 
                     for (Review post : posts.getResults()){
@@ -273,7 +297,7 @@ public class DetailActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<ReviewList> call, Throwable t) {
+            public void onFailure(Call<MovieReviewLists> call, Throwable t) {
                 Log.d(TAG, "onFailure: getReviews " + t.getLocalizedMessage() );
             }
         });

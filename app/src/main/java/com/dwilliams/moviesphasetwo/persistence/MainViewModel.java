@@ -6,6 +6,7 @@ import android.util.Log;
 import com.dwilliams.moviesphasetwo.customarrayadapter.MyPopularMovieAdapter;
 import com.dwilliams.moviesphasetwo.dao.Movie;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -19,8 +20,13 @@ public class MainViewModel extends AndroidViewModel {
     //Constant for logging
     private static final String TAG = MainViewModel.class.getSimpleName();
 
-    private LiveData<List<Movie>> movie;
+    private LiveData<List<Movie>> mFavorites;
+    private MutableLiveData<List<Movie>> allMovies;
+    private LiveData<List<Movie>> mPopularMovies;
+    private LiveData<List<Movie>> mTopRatedMovies;
     private MyPopularMovieAdapter mPopularmoviesAdapter;
+    private AppRepository appRepo;
+
 
     @Nullable
     private Integer menuId;
@@ -28,14 +34,50 @@ public class MainViewModel extends AndroidViewModel {
     public MainViewModel(@NonNull Application application) {
         super(application);
         Log.d(TAG, "MainViewModel: Actively retrieving records from the Database");
-        AppDatabase database = AppDatabase.getsInstance(this.getApplication());
-        movie = database.taskDao().getAll();
+        appRepo = AppRepository.getInstance(this.getApplication());
+        allMovies = new MutableLiveData<>();
+        mPopularMovies = appRepo.getPopularMovies();
+        mTopRatedMovies = appRepo.getTopRatedMovie();
+        mFavorites = appRepo.geAllFavorites();
+
         mPopularmoviesAdapter = new MyPopularMovieAdapter();
     }
 
-    public LiveData<List<Movie>> getMovie(){
-        return movie;
+
+    public LiveData<List<Movie>> getDefaultMovies(){ return allMovies; }
+
+    public LiveData<List<Movie>> getPopularMovies(){ return mPopularMovies; }
+
+    public LiveData<List<Movie>> getmTopRatedMovies(){ return mTopRatedMovies; }
+
+    public LiveData<List<Movie>> getFavoriteMovies(){ return mFavorites; }
+
+    public void setmPopularMovies() {
+        if(mPopularMovies != null){
+            allMovies.setValue(mPopularMovies.getValue());
+        } else {
+            allMovies.setValue(new ArrayList<>());
+        }
+
     }
+
+    public void setmTopRatedMovies() {
+        if(mTopRatedMovies != null){
+            allMovies.setValue(mTopRatedMovies.getValue());
+        } else {
+            allMovies.setValue(new ArrayList<>());
+        }
+    }
+
+    public void setmFavorites() {
+        if(mFavorites != null){
+            allMovies.setValue(mFavorites.getValue());
+        } else {
+            allMovies.setValue(new ArrayList<>());
+        }
+    }
+
+
 
     @Nullable
     public  Integer getMenuId() {

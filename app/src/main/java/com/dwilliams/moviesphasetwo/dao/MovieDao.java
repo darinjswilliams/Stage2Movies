@@ -3,6 +3,7 @@ package com.dwilliams.moviesphasetwo.dao;
 import java.util.List;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
@@ -16,7 +17,7 @@ public interface MovieDao {
     @Query("SELECT * FROM Movie ORDER BY id")
      LiveData<List<Movie>> getAll();
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTask(Movie movie);
 
     @Update(onConflict = OnConflictStrategy.REPLACE)
@@ -28,9 +29,11 @@ public interface MovieDao {
     @Query("SELECT * FROM Movie WHERE id = :id")
     LiveData<List<Movie>> loadTaskById(int id);
 
-    @Query("Select COUNT(*) FROM Movie")
-    int getCount();
+    @Query("Select id FROM Movie")
+    List<Integer> getFavoriteMovieIds();
 
     @Query("SELECT COUNT(*) FROM Movie WHERE id = :id")
     int doesExists(int id);
+
+
 }

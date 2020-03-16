@@ -9,7 +9,6 @@ import android.widget.ImageView;
 
 import com.dwilliams.moviesphasetwo.constants.Constants;
 import com.dwilliams.moviesphasetwo.dao.Movie;
-
 import com.dwilliams.moviesphasetwo.popularmovies.R;
 import com.squareup.picasso.Picasso;
 
@@ -37,9 +36,19 @@ public class MyPopularMovieAdapter extends RecyclerView.Adapter<MyPopularMovieAd
         this.mMoviesData = new ArrayList<>();
     }
 
+
+    public MyPopularMovieAdapter(Context ctx,
+                                 List<Movie> mMoviesData ) {
+        this.ctx = ctx;
+        this.mMoviesData = mMoviesData;
+    }
+
+
     public MyPopularMovieAdapter(){
         this.mMoviesData = new ArrayList<>();
     }
+
+
 
     public interface MyPopularMovieAdapterOnClickHandler {
         void onClick(Movie myMovie);
@@ -103,7 +112,7 @@ public class MyPopularMovieAdapter extends RecyclerView.Adapter<MyPopularMovieAd
     }
 
     public void setmPopularMoviesData(List<Movie> mPopularMoviesData) {
-        Log.d(TAG, "onPostExecute:Count of Data passed in.." + mPopularMoviesData.size());
+        Log.d(TAG, "onPostExecute:Count of Data passed in..");
         this.mMoviesData.clear();
         this.mMoviesData.addAll(mPopularMoviesData);
         notifyDataSetChanged();

@@ -10,7 +10,6 @@ import android.widget.TextView;
 import com.dwilliams.moviesphasetwo.dto.Review;
 import com.dwilliams.moviesphasetwo.popularmovies.R;
 
-
 import java.util.List;
 
 import androidx.annotation.NonNull;

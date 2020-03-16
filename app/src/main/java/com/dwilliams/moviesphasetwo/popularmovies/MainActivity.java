@@ -19,8 +19,7 @@ import com.dwilliams.moviesphasetwo.customarrayadapter.MyPopularMovieAdapter;
 import com.dwilliams.moviesphasetwo.dao.Movie;
 import com.dwilliams.moviesphasetwo.dto.MovieList;
 import com.dwilliams.moviesphasetwo.networkUtils.MoviePlaceHolderApi;
-import com.dwilliams.moviesphasetwo.networkUtils.RetrofitClient;
-import com.dwilliams.moviesphasetwo.persistence.AppDatabase;
+import com.dwilliams.moviesphasetwo.persistence.AppRepository;
 import com.dwilliams.moviesphasetwo.persistence.MainViewModel;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -28,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.Observer;
@@ -36,9 +34,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
 
 
 public class MainActivity extends AppCompatActivity implements MyPopularMovieAdapter.MyPopularMovieAdapterOnClickHandler{
@@ -51,16 +46,19 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
     private RecyclerView myRecyclerView;
     private RelativeLayout mRelativeLayout;
     private MoviePlaceHolderApi moviePlaceHolderApi;
-    private static final String consumerSecret = BuildConfig.CONSUMER_SECRET;
     private Call<MovieList> call;
     private List<Movie> mMovieList;
+    private  List<Movie> mMovieSelection = new ArrayList<>();
+    private AppRepository appRepository;
 
     //keys
     private static final String MOVIE_KEY = "movielist";
     private static final String ON_SAVE_INSTANCE_STATE = "onSaveInstanceState";
+    Parcelable listState;
 
     //TODO - ADD MEMBER VARIABLE FOR THE DATABASE
-    private AppDatabase mDb;
+//    private AppDatabase mDb;
+    private AppRepository appRepo;
 
     //ViewModel
     private MainViewModel mViewModel;
@@ -71,46 +69,62 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //TODO - Get instance of Database
-        mDb = AppDatabase.getsInstance(getApplicationContext());
+        appRepo = AppRepository.getInstance(this.getApplication());
 
         //ToolBar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
+        appRepository = AppRepository.getInstance(this.getApplication());
         //Initialize View Model
         initViewModel();
 
+        initRecycleView();
+
+
+
+        Log.d(TAG, "onCreate: view model " + mViewModel.getDefaultMovies().getValue());
+
+         mViewModel.getDefaultMovies().observe(this, new Observer<List<Movie>>() {
+             @Override
+             public void onChanged(List<Movie> movies) {
+                 Log.d(TAG, "onChanged: inside onCreate -> mViewModel observer");
+                 mPopularmoviesAdapter.setmPopularMoviesData(movies);
+                 myRecyclerView.setAdapter(mPopularmoviesAdapter);
+             }
+         });
+
+         if(savedInstanceState == null){
+             Log.d(TAG, "onCreate: saveInstanceState is Null");
+             mViewModel.getDefaultMovies().observe(this, new Observer<List<Movie>>() {
+                 @Override
+                 public void onChanged(List<Movie> movies) {
+                     if(mPopularmoviesAdapter == null) {
+                         mPopularmoviesAdapter.setmPopularMoviesData(movies);
+                         myRecyclerView.setAdapter(mPopularmoviesAdapter);
+                     }else{
+                         mPopularmoviesAdapter.notifyDataSetChanged();
+                     }
+                 }
+             });
+         } else {
+             mPopularmoviesAdapter.setmPopularMoviesData(appRepository.getPopularMovies().getValue());
+             myRecyclerView.setAdapter(mPopularmoviesAdapter);
+         }
+    }
+
+    private void initRecycleView() {
         myRecyclerView = (RecyclerView) findViewById(R.id.myRecycler);
         mRelativeLayout = (RelativeLayout) findViewById(R.id.relativeLayoutId);
 
-        /**
-         * SET TO GRIDLAYOUT WITH A SPAN OF 2 COLUMNS
-         *
-         */
-
+        // SET TO GRIDLAYOUT WITH A SPAN OF 2 COLUMNS
         myRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
         mPopularmoviesAdapter = new MyPopularMovieAdapter(this,
                 (MyPopularMovieAdapter.MyPopularMovieAdapterOnClickHandler) this);
 
+
         myRecyclerView.setAdapter(mPopularmoviesAdapter);
-
-
-        //runData on backround thread fist to get default data
-        //first run call default movie, passing 0
-        if(mViewModel.getMenuId() ==  null) {
-            loadMovieData(Constants.MOVIE_COUNT);
-        } else {
-            loadMovieData(mViewModel.getMenuId());
-        }
-        //Get Instance of Database
-        mDb = AppDatabase.getsInstance(getApplicationContext());
-
-
-
-        subscribe();
     }
 
     private void initViewModel() {
@@ -123,28 +137,31 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
         Log.d(TAG, "subscribe: called");
         final Observer<List<Movie>> mMovie = new Observer<List<Movie>>() {
             @Override
-            public void onChanged(List<Movie> movies) {
+            public void onChanged(@NonNull List<Movie> movies) {
                 Log.d(TAG, "onChanged: subscribing");
-                mPopularmoviesAdapter.setmPopularMoviesData(movies);
+                mMovieSelection.clear();
+                mMovieSelection.addAll(movies);
+
+                if (mPopularmoviesAdapter == null) {
+                    mPopularmoviesAdapter.setmPopularMoviesData(movies);
+
+                    myRecyclerView.setAdapter(mPopularmoviesAdapter);
+                }
             }
         };
     }
 
 
-
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         Log.d(TAG, "onSaveInstanceState: called");
-//        if(!mMovieList.isEmpty()){
-//            outState.putParcelableArrayList(ON_SAVE_INSTANCE_STATE, (ArrayList<? extends Parcelable>) mMovieList);
-//        }
-
-        outState.putParcelableArrayList(ON_SAVE_INSTANCE_STATE, (ArrayList<? extends Parcelable>) mMovieList);
         super.onSaveInstanceState(outState);
 
+        outState.putParcelableArrayList(ON_SAVE_INSTANCE_STATE, (ArrayList<? extends Parcelable>) mMovieList);
+        listState = myRecyclerView.getLayoutManager().onSaveInstanceState();
+        outState.putParcelable(ON_SAVE_INSTANCE_STATE, listState);
+
     }
-
-
 
     // Restore list state from bundle
     @Override
@@ -152,8 +169,18 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
         Log.d(TAG, "onRestoreInstanceState: called");
         super.onRestoreInstanceState(state);
         if(state != null)
-        mMovieList = state.getParcelable(ON_SAVE_INSTANCE_STATE);
+         listState = state.getParcelable(ON_SAVE_INSTANCE_STATE);
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if(listState != null){
+            myRecyclerView.getLayoutManager().onRestoreInstanceState(listState);
+        }
+    }
+
 
 
     @Override
@@ -167,40 +194,45 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
-        int id = item.getItemId();
-
         //Keep track of menu item choosen
+    if(checkInternetConnection(this.getApplicationContext())) {
+     switch (item.getItemId()) {
 
-        mViewModel.setMenuId(id);
-        Context context = MainActivity.this;
+         case R.id.action_sortPopular:
+             mViewModel.getPopularMovies().observe(this, mList -> {
+                 mViewModel.setmPopularMovies();
+                 mPopularmoviesAdapter.setmPopularMoviesData(mViewModel.getPopularMovies().getValue());
 
-        switch(item.getItemId()){
+             });
+             return true;
 
-            case R.id.action_sortPopular:
-                loadMovieData(item.getItemId());
-                return true;
+         case R.id.action_sortRating:
 
-            case R.id.action_sortRating:
-                loadMovieData(item.getItemId());
-                return true;
+             mViewModel.getmTopRatedMovies().observe(this, mList -> {
+                 mViewModel.setmTopRatedMovies();
+                 mPopularmoviesAdapter.setmPopularMoviesData(mViewModel.getmTopRatedMovies().getValue());
 
-            case R.id.action_favorites:
-                retrieveFavorites();
-                return true;
+             });
+             return true;
 
-            default:
-                return super.onOptionsItemSelected(item);
-        }
+         case R.id.action_favorites:
+
+             mViewModel.getFavoriteMovies().observe(this, mList -> {
+                 mViewModel.setmFavorites();
+                 mPopularmoviesAdapter.setmPopularMoviesData(mViewModel.getFavoriteMovies().getValue());
+
+             });
+
+             return true;
+
+
+         default:
+             return super.onOptionsItemSelected(item);
+      }
+     }
+        return true;
     }
 
-    private void loadMovieData(int sortParam){
-        myRecyclerView.setVisibility(View.VISIBLE);
-
-        if(checkInternetConnection(this)) {
-            Log.i(TAG, "loadMovieData: Calling Aysnc");
-             fetchPopularMovie(sortParam);
-        }
-    }
 
 
     private boolean checkInternetConnection(Context context) {
@@ -243,77 +275,5 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
         startActivity(intent);
     }
 
-    public void retrieveFavorites() {
-        
-        //LiveData Runs outside of main thread
-        //Use Executors for insert, update, and delete operations
-
-        mViewModel.getMovie().observe(this, new Observer<List<Movie>>() {
-            @Override
-            public void onChanged(@Nullable List<Movie> movies) {
-                Log.d(TAG, "onChanged: Receiving database update from LiveData in ViewModel");
-                mPopularmoviesAdapter.setmPopularMoviesData(movies);
-            }
-        });
-    }
-
-
-    public void fetchPopularMovie(int sortParam){
-
-        Log.d(TAG, "doInBackground: before retrofit build call");
-        //Retrofit to parse data
-        Retrofit retrofit = RetrofitClient.getClient();
-
-        Log.d(TAG, "doInBackground: after retrofit build");
-
-        moviePlaceHolderApi = retrofit.create(MoviePlaceHolderApi.class);
-
-        getPosts(sortParam);
-    }
-
-
-    private void getPosts(int sortParam){
-
-        switch(sortParam){
-            case R.id.action_sortPopular:
-                Log.d(TAG, "getPosts: calling getPopularMovies");
-                call = moviePlaceHolderApi.getPopularMovies(consumerSecret);
-                break;
-
-            case  R.id.action_sortRating:
-                Log.d(TAG, "getPosts: calling getTopRatedMovie");
-                call = moviePlaceHolderApi.getTopRatedMovies(consumerSecret);
-                break;
-
-            default:
-                Log.d(TAG, "getPosts: calling default getPopular");
-                call = moviePlaceHolderApi.getPopularMovies(consumerSecret);
-
-        }
-
-        Log.d(TAG, "getPosts: inside getPosts" + consumerSecret);
-
-        //Place in background thread
-        call.enqueue(new Callback<MovieList>() {
-            @Override
-            public void onResponse(Call<MovieList> call, Response<MovieList> response) {
-
-                if(response.isSuccessful()){
-                    MovieList  posts = response.body();
-                    mMovieList = new ArrayList<Movie>();
-                    mMovieList.addAll(posts.getResults());
-                    mPopularmoviesAdapter.setmPopularMoviesData(mMovieList);
-
-                }
-
-            }
-
-            @Override
-            public void onFailure(Call<MovieList>call, Throwable t) {
-                Log.d(TAG, "onFailure: " + t.getLocalizedMessage());
-            }
-        });
-
-    }
 
 }
