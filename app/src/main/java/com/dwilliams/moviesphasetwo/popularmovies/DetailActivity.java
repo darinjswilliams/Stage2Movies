@@ -22,7 +22,6 @@ import com.dwilliams.moviesphasetwo.networkUtils.RetrofitClient;
 import com.dwilliams.moviesphasetwo.persistence.AppDatabase;
 import com.dwilliams.moviesphasetwo.persistence.AppRepository;
 import com.dwilliams.moviesphasetwo.persistence.DetailViewModel;
-import com.dwilliams.moviesphasetwo.persistence.DetailViewModelFactory;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -95,8 +95,7 @@ public class DetailActivity extends AppCompatActivity {
         popularMovie = intent.getParcelableExtra(Constants.POPULAR_MOVIE);
 
         //Initialize ViewModel
-        DetailViewModelFactory dViewModelFactory = new DetailViewModelFactory(appRepository, popularMovie.getId() );
-        mViewModel = new ViewModelProvider(this, dViewModelFactory).get(DetailViewModel.class);
+        mViewModel = new ViewModelProvider(this).get(DetailViewModel.class);
 
         //Setup tool bar
         setSupportActionBar(toolbar);
@@ -203,24 +202,18 @@ public class DetailActivity extends AppCompatActivity {
 
 
     private void updateTrailers(TrailerList trailerList){
-        Log.d(TAG, "updateTrailers: count of trailers ");
-        mTrailersAdapter.updateTrailers(trailerList.getResults());
+        Log.d(TAG, "setTrailers: count of trailers ");
+        mTrailersAdapter.setTrailers(trailerList.getResults());
     }
 
 
     private void updateReviews(MovieReviewLists reviewList){
-        mReviewsAdapter.updateReviews(reviewList.getResults());
+        mReviewsAdapter.setReviews(reviewList.getResults());
     }
 
     private void getMovieTrailersAndReviews(Integer movieId){
 
         Log.d(TAG, "doInBackground: getMovieTrailersAndReviews --> id " + movieId);
-        //Retrofit to parse data
-        Retrofit retrofit = RetrofitClient.getClient();
-
-        Log.d(TAG, "doInBackground: after retrofit build");
-
-        moviePlaceHolderApi = retrofit.create(MoviePlaceHolderApi.class);
 
         getTrailerDataFeed(movieId);
         getReviewDataFeed(movieId);
@@ -231,74 +224,21 @@ public class DetailActivity extends AppCompatActivity {
 
 
         Log.d(TAG, "getVideoDataFeed: " + movieId);
-//        updateTrailers(mViewModel.getmMovieTrailers());
-
-//       mViewModel.getmMovieTrailers().observe(this, mTrailerList -> {
-//           mTrailersAdapter = new TrailerAdapter(mTrailerList);
-//           recVwtrailers.setAdapter(mTrailersAdapter);
-////           mTrailersAdapter.updateTrailers(mTrailerList);
-//
-//           if(mTrailersAdapter.getItemCount()== 0){
-//               recVwtrailers.setVisibility(View.INVISIBLE);
-//           } else {
-//               recVwtrailers.setVisibility(View.VISIBLE);
-//           }
-//       });
-
-//        Call<TrailerList> call = moviePlaceHolderApi.getMovieTrailers(movieId, consumerSecret);
-        Call<TrailerList> call = moviePlaceHolderApi.getMovieTrailers(movieId, consumerSecret);
-        call.enqueue(new Callback<TrailerList>() {
+        mViewModel.getmMovieTrailers(movieId).observe(this, new Observer<List<Trailer>>() {
             @Override
-            public void onResponse(Call<TrailerList> call, Response<TrailerList> response) {
-                if(response.isSuccessful()){
-                    TrailerList postTrailers =  response.body();
-
-                    if (postTrailers != null) {
-                        Log.d(TAG, "a trailer list has been received");
-
-                        updateTrailers(postTrailers);
-                    }
-
-                }
-
-            }
-
-            @Override
-            public void onFailure(Call<TrailerList> call, Throwable t) {
-                Log.d(TAG, "onFailure: getMovieTraillers " + t.getLocalizedMessage());
-
+            public void onChanged(List<Trailer> trailers) {
+                mTrailersAdapter.setTrailers(trailers);
             }
         });
-
     }
 
     private void getReviewDataFeed(Integer movieId){
         Log.d(TAG, "getReviewDataFeed: ");
-        Call<MovieReviewLists> call = moviePlaceHolderApi.getMovieReviews(movieId, consumerSecret);
 
-        call.enqueue(new Callback<MovieReviewLists>() {
+        mViewModel.getmMovieReviews(movieId).observe(this, new Observer<List<Review>>() {
             @Override
-            public void onResponse(Call<MovieReviewLists> call, Response<MovieReviewLists> response) {
-                if(response.isSuccessful()){
-                    MovieReviewLists posts =  response.body();
-                    mReviewList = new ArrayList<Review>();
-
-                    for (Review post : posts.getResults()){
-                        Log.d(TAG, "onResponse: getReviewDataFeed" + post.getAuthor());
-                        mReviewList.add(post);
-                    }
-
-                    if (mReviewList != null) {
-                        Log.d(TAG, "a Review list has been received");
-                        updateReviews(posts);
-                    }
-
-                }
-            }
-
-            @Override
-            public void onFailure(Call<MovieReviewLists> call, Throwable t) {
-                Log.d(TAG, "onFailure: getReviews " + t.getLocalizedMessage() );
+            public void onChanged(List<Review> reviews) {
+                mReviewsAdapter.setReviews(reviews);
             }
         });
     }

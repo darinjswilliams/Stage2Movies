@@ -24,7 +24,7 @@ public class MyPopularMovieAdapter extends RecyclerView.Adapter<MyPopularMovieAd
 
     private Context ctx;
 
-    //Define Arraylist of Movie Objects
+    //Define Arraylist of Movie Objects that are cached
     private List<Movie> mMoviesData;
     private MyPopularMovieAdapterOnClickHandler myPopularMovieClickHandler;
 

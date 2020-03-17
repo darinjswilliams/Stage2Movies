@@ -71,8 +71,8 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.MyTraile
     }
 
     //Notified RecycleView Change
-    public void updateTrailers(List<Trailer> trailers) {
-        Log.d(TAG, "updateTrailers: ");
+    public void setTrailers(List<Trailer> trailers) {
+        Log.d(TAG, "setTrailers: ");
         mTrailerData = trailers;
         notifyDataSetChanged();
     }

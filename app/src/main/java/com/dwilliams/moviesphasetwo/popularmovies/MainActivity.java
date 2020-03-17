@@ -77,9 +77,12 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
 
         appRepository = AppRepository.getInstance(this.getApplication());
         //Initialize View Model
-        initViewModel();
 
         initRecycleView();
+
+        initViewModel();
+
+
 
 
 
@@ -107,10 +110,8 @@ public class MainActivity extends AppCompatActivity implements MyPopularMovieAda
                      }
                  }
              });
-         } else {
-             mPopularmoviesAdapter.setmPopularMoviesData(appRepository.getPopularMovies().getValue());
-             myRecyclerView.setAdapter(mPopularmoviesAdapter);
          }
+
     }
 
     private void initRecycleView() {

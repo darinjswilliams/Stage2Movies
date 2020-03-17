@@ -58,8 +58,8 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.MyTrailerH
     }
 
     //NotifyDataSetChanged in RecycleView
-    public void updateReviews(List<Review> reviews) {
-        Log.d(TAG, "updateReviews: ");
+    public void setReviews(List<Review> reviews) {
+        Log.d(TAG, "setReviews: ");
         mReviewData = reviews;
         notifyDataSetChanged();
     }
