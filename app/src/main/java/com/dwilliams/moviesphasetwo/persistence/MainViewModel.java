@@ -3,7 +3,6 @@ package com.dwilliams.moviesphasetwo.persistence;
 import android.app.Application;
 import android.util.Log;
 
-import com.dwilliams.moviesphasetwo.customarrayadapter.MyPopularMovieAdapter;
 import com.dwilliams.moviesphasetwo.dao.Movie;
 
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ public class MainViewModel extends AndroidViewModel {
     private MutableLiveData<List<Movie>> allMovies;
     private LiveData<List<Movie>> mPopularMovies;
     private LiveData<List<Movie>> mTopRatedMovies;
-    private MyPopularMovieAdapter mPopularmoviesAdapter;
     private AppRepository appRepo;
 
 
@@ -34,17 +32,14 @@ public class MainViewModel extends AndroidViewModel {
     public MainViewModel(@NonNull Application application) {
         super(application);
         Log.d(TAG, "MainViewModel: Actively retrieving records from the Database");
-        appRepo = AppRepository.getInstance(this.getApplication());
+        appRepo = AppRepository.getInstance(application);
         allMovies = new MutableLiveData<>();
         mPopularMovies = appRepo.getPopularMovies();
         mTopRatedMovies = appRepo.getTopRatedMovie();
         mFavorites = appRepo.geAllFavorites();
 
-        mPopularmoviesAdapter = new MyPopularMovieAdapter();
     }
 
-
-    public LiveData<List<Movie>> getDefaultMovies(){ return allMovies; }
 
     public LiveData<List<Movie>> getPopularMovies(){ return mPopularMovies; }
 
@@ -77,7 +72,15 @@ public class MainViewModel extends AndroidViewModel {
         }
     }
 
+    public LiveData<List<Movie>> getDefaultMovies() {
 
+        if(allMovies.getValue() == null){
+            Log.d(TAG, "getDefaultMovies: getting popular movies");
+            allMovies.postValue(mPopularMovies.getValue());
+        }
+
+        return allMovies;
+    }
 
     @Nullable
     public  Integer getMenuId() {

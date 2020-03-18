@@ -111,23 +111,11 @@ public class MyPopularMovieAdapter extends RecyclerView.Adapter<MyPopularMovieAd
         }
     }
 
-    public void setmPopularMoviesData(List<Movie> mPopularMoviesData) {
+    public void setMovies(List<Movie> mPopularMoviesData) {
         Log.d(TAG, "onPostExecute:Count of Data passed in..");
         this.mMoviesData.clear();
         this.mMoviesData.addAll(mPopularMoviesData);
         notifyDataSetChanged();
     }
-
-    /**
-     * When data changes, this method updates the list of taskEntries
-     * and notifies the adapter to use the new values on it
-     * This will populate the favorites activities
-     */
-//    public void setTasks(List<MovieEntry> taskEntries) {
-//        mTaskEntries = taskEntries;
-//        notifyDataSetChanged();
-//    }
-
-
 
 }

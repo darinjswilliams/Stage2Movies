@@ -18,13 +18,9 @@ import com.dwilliams.moviesphasetwo.dto.Review;
 import com.dwilliams.moviesphasetwo.dto.Trailer;
 import com.dwilliams.moviesphasetwo.dto.TrailerList;
 import com.dwilliams.moviesphasetwo.networkUtils.MoviePlaceHolderApi;
-import com.dwilliams.moviesphasetwo.networkUtils.RetrofitClient;
-import com.dwilliams.moviesphasetwo.persistence.AppDatabase;
-import com.dwilliams.moviesphasetwo.persistence.AppRepository;
 import com.dwilliams.moviesphasetwo.persistence.DetailViewModel;
 import com.squareup.picasso.Picasso;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -35,10 +31,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
 
 
 public class DetailActivity extends AppCompatActivity {
@@ -72,10 +64,6 @@ public class DetailActivity extends AppCompatActivity {
     private ReviewAdapter mReviewsAdapter;
     private DetailViewModel mViewModel;
 
-    // Movie Database Instance
-    private AppDatabase mDb;
-    private AppRepository appRepository;
-
 
 
     @Override
@@ -86,9 +74,6 @@ public class DetailActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
-
-        //Initialize Database
-        appRepository = AppRepository.getInstance(this.getApplication());
 
 
         Intent intent = getIntent();

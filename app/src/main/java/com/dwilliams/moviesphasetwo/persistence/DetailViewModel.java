@@ -25,14 +25,6 @@ public class DetailViewModel extends AndroidViewModel {
     private AppRepository appRepo;
 
 
-//    public DetailViewModel( AppRepository appRepo, Integer id) {
-//        this.appRepo = appRepo;
-//        this.mMovieFavoriteIds = appRepo.getFavoriteMovieIds();
-//        this.mMovieReviews =  appRepo.getMovieReviews(id);
-//        this.mMovieTrailers = appRepo.getTrailers(id);
-//
-//    }
-
     public DetailViewModel(@NonNull Application application) {
         super(application);
         this.appRepo = AppRepository.getInstance(application);

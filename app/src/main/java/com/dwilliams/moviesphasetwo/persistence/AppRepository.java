@@ -40,6 +40,7 @@ public class AppRepository {
     private MutableLiveData<List<Movie>> mRatedMovieList = new MutableLiveData<>();
     private MutableLiveData<List<Movie>> mFavoriteMovieList = new MutableLiveData<>();
 
+
     private LiveData<List<Movie>> mMovieList;
     private MutableLiveData<List<Trailer>> mTrailerList = new MutableLiveData<>();
     private TrailerList trailerList;
@@ -79,7 +80,7 @@ public class AppRepository {
                     MovieList  posts = response.body();
                     mPopularArrayList.postValue(posts.getResults());
 
-//                    mPopularmoviesAdapter.setmPopularMoviesData(mMovieList);
+//                    mPopularmoviesAdapter.setMovies(mMovieList);
 
                 }
 
